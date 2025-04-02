@@ -1,0 +1,61 @@
+from selenium import webdriver
+import subprocess
+import time
+import platform
+
+# 1. Set your target URL
+url = "https://google.com"
+
+# 2. Define FFmpeg command depending on your OS
+if platform.system() == "Darwin":  # macOS
+    ffmpeg_cmd = [
+        'ffmpeg',
+        '-y',
+        '-video_size', '1920x1080',
+        '-framerate', '30',
+        '-f', 'avfoundation',
+        '-i', '1:0',  # may vary, run `ffmpeg -f avfoundation -list_devices true -i ""` to confirm
+        'output.mp4'
+    ]
+elif platform.system() == "Windows":
+    ffmpeg_cmd = [
+        'ffmpeg',
+        '-y',
+        '-video_size', '1920x1080',
+        '-framerate', '30',
+        '-f', 'gdigrab',
+        '-i', 'desktop',
+        'output.mp4'
+    ]
+else:  # Assume Linux
+    ffmpeg_cmd = [
+        'ffmpeg',
+        '-y',
+        '-video_size', '1920x1080',
+        '-framerate', '30',
+        '-f', 'x11grab',
+        '-i', ':0.0',
+        'output.mp4'
+    ]
+
+# 3. Start FFmpeg recording
+ffmpeg_process = subprocess.Popen(ffmpeg_cmd)
+
+# 4. Launch the browser
+driver = webdriver.Chrome()
+driver.get(url)
+time.sleep(2)  # Let the page load
+
+# 5. Scroll the page or interact
+driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+time.sleep(5)
+
+# 6. Stop recording
+ffmpeg_process.terminate()
+try:
+    ffmpeg_process.wait(timeout=5)
+except subprocess.TimeoutExpired:
+    ffmpeg_process.kill()
+
+# 7. Close browser
+driver.quit()
